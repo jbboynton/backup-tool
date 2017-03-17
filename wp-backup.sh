@@ -1,8 +1,19 @@
 #!/bin/bash
 
-date=$(date +%Y%m%d%H%M%S)
-# TODO: log the date of the backup
-# TODO: log the date of the last successful backup
+# Create a directory for backups if it doesn't exist
+if ! [ -e "${HOME}/.jb_backup" ]; then
+  mkdir "${HOME}/.jb_backup"
+fi
+
+# Create a directory for the current backup
+if ! [ -e "${HOME}/.jb_backup/$(date +%Y%m%d)" ]; then
+  mkdir "${HOME}/.jb_backup/$(date +%Y%m%d)"
+fi
+backup_dir_path="${HOME}/.jb_backup/$(date +%Y%m%d)"
+
+# Create a log file
+touch "${backup_dir_path}/.backup_log"
+backup_log_file="${backup_dir_path}/.backup_log"
 
 # Loop through the .backup_id file, read in backup info
 if [ -e "${HOME}/.backup_id" ]; then
@@ -10,28 +21,56 @@ if [ -e "${HOME}/.backup_id" ]; then
     # Store each line in an array
     id_array+=("${line}")
   done < "${HOME}/.backup_id"
-  # TODO: log successful read
+  echo "Successfully found the backup_id file." | tee -a "${backup_log_file}"
 else
   # TODO: this should prompt: create a new one?
   # TODO: log that a .backup_id file was created
-  printf "Need a backup_id file.\n\nExiting. . ." && exit
+  printf "Need a backup_id file.\n\nExiting without backing up\n" | tee -a "${backup_log_file}" && exit
 fi
 
 site_name=${id_array[0]}
-# TODO: log site name in the header of the log file
-backup_filename="${date}_${site_name}.gz"
+user_name=${id_array[1]}
+backup_filename="$(date +%Y%m%d%H%M%S)_${site_name}.tar.gz"
+backup_file_path="${backup_dir_path}/${backup_filename}"
 
-cd "${HOME}/public_html/" || ( printf "Directory not found.\n\nExiting. . ." && exit )
-# TODO: log the path to the directory that will be backed up
+# Log date and time of the backup
+echo "Backing up and updating ${site_name}." | tee -a "${backup_log_file}"
+echo "Backup date: $(date +%F)" | tee -a "${backup_log_file}"
+echo "" | tee -a "${backup_log_file}"
 
-wp db export
-#TODO: log output from wp db export
-tar -vczf $backup_filename .
-# TODO: log output from tar
-wp core update
-# log output from wp core update
-wp plugin update --all
-# TODO: log output from wp plugin update
+echo "Starting the backup..." | tee -a "${backup_log_file}"
+cd "${HOME}/public_html/" || ( printf "Directory not found.\n\nExiting. . ." | tee -a "${backup_log_file}" && exit )
+
+echo "Exporting database..." | tee -a "${backup_log_file}"
+wp db export | tee -a "${backup_log_file}"
+
+echo "Compressing..." | tee -a "${backup_log_file}"
+tar -cpzf "${backup_dir_path}/${backup_filename}" .
+echo "Successfully exported archive to ${backup_file_path}" | tee -a "${backup_log_file}"
+
+echo "Finished creating the backup" | tee -a "${backup_log_file}"
+echo "" | tee -a "${backup_log_file}"
+
+echo "Starting the update process..." | tee -a "${backup_log_file}"
+echo "Updating WordPress core..." | tee -a "${backup_log_file}"
+wp core update | tee -a "${backup_log_file}"
+echo "WordPress core updated" | tee -a "${backup_log_file}"
+
+echo "Updating WordPress plugins..." | tee -a "${backup_log_file}"
+wp plugin update --all | tee -a "${backup_log_file}"
+echo "WordPress plugins updated" | tee -a "${backup_log_file}"
+
+echo "Done updating" | tee -a "${backup_log_file}"
+echo "" | tee -a "${backup_log_file}"
+
+echo "Starting file transfer..." | tee -a "${backup_log_file}"
+printf "To transfer the file, run this command:
+
+If the site is on SiteGround:
+  rsync -rvz -e 'ssh -p 18765' [ssh alias, e.g. horner]:.jb_backup/ /User/computer14/Desktop/
+
+If connecting to a standard port:
+  rsync -rvz [ssh alias, e.g. horner]:.jb_backup/ /User/computer14/Desktop/\n\n" | tee -a "${backup_log_file}"
 
 exit
 
