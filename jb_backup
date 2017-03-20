@@ -9,9 +9,9 @@
 # $1 The identifier for the remote site, as defined in .ssh/config
 
 # Open an SSH connection to the remote machine and run the backup
-ssh $1 'bash -s' < ./wp-backup.sh
+ssh $1 'bash -s' < ./wp_backup
 
 # Transfer the backup file to the local machine, passing the SSH identifier as
 # a parameter
-sh ./wp-transfer.sh $1
+sh ./wp_transfer $1
 
