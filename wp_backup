@@ -42,13 +42,17 @@ echo "Starting the backup..." | tee -a "${backup_log_file}"
 cd "${HOME}/public_html/" || ( printf "Directory not found.\n\nExiting. . ." | tee -a "${backup_log_file}" && exit )
 
 echo "Exporting database..." | tee -a "${backup_log_file}"
-wp db export | tee -a "${backup_log_file}"
+db_backup_filename=$( wp db export --porcelain | tee -a "${backup_log_file}" )
+echo "Successfully exported database to ${db_backup_filename}"
 
 echo "Compressing..." | tee -a "${backup_log_file}"
 tar -cpzf "${backup_dir_path}/${backup_filename}" .
 echo "Successfully exported archive to ${backup_file_path}" | tee -a "${backup_log_file}"
 
 echo "Finished creating the backup" | tee -a "${backup_log_file}"
+echo "Removing SQL file from the public directory..." | tee -a "${backup_log_file}"
+rm "${db_backup_filename}" 
+echo "The SQL file ${db_backup_filename} successfully deleted" | tee -a "${backup_log_file}"
 echo "" | tee -a "${backup_log_file}"
 
 echo "Starting the update process..." | tee -a "${backup_log_file}"
@@ -64,13 +68,6 @@ echo "Done updating" | tee -a "${backup_log_file}"
 echo "" | tee -a "${backup_log_file}"
 
 echo "Starting file transfer..." | tee -a "${backup_log_file}"
-printf "To transfer the file, run this command:
-
-If the site is on SiteGround:
-  rsync -rvz -e 'ssh -p 18765' [ssh alias, e.g. horner]:.jb_backup/ /User/computer14/Desktop/
-
-If connecting to a standard port:
-  rsync -rvz [ssh alias, e.g. horner]:.jb_backup/ /User/computer14/Desktop/\n\n" | tee -a "${backup_log_file}"
 
 exit
 
