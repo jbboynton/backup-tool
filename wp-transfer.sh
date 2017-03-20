@@ -1,3 +1,8 @@
 #!/bin/bash
 
-rsync -vz -e 'ssh -p 18765' horner:$HOME/.jb_backup/ /User/computer14/Desktop/
+# If the site is on SiteGround:
+#   rsync -rvz -e 'ssh -p 18765' [ssh alias, e.g. horner]:.jb_backup/ /Users/computer14/Desktop/
+# If connecting to a standard port:
+#   rsync -rvz [ssh alias, e.g. horner]:.jb_backup/ /Users/computer14/Desktop/\n\n" | tee -a "${backup_log_file}"
+
+rsync -rvz -e 'ssh -p 18765' $1:.jb_backup/ /Users/computer14/Desktop/
