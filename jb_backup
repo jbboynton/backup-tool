@@ -8,10 +8,13 @@
 # Params
 # $1 The identifier for the remote site, as defined in .ssh/config
 
+# Read the backup_id file and extract backup parameters
+ssh $1 'bash -s' < ./load_id
+
 # Open an SSH connection to the remote machine and run the backup
-ssh $1 'bash -s' < ./wp_backup
+ssh $1 'bash -s' < ./backup
 
 # Transfer the backup file to the local machine, passing the SSH identifier as
 # a parameter
-sh ./wp_transfer $1
+sh ./transfer $1
 

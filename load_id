@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# rsync the backup_id file locally in /tmp
+# store params in array in jb_transfer
+# pass needed args to backup* and transfer*
+
+# rsync with checksum/incrementally/as needed files
+
